@@ -1,6 +1,11 @@
 include:
   - base
 
+iptables.persistent:
+  pkg.installed:
+    - pkgs:
+      - iptables-persistent
+
 {% for rule in salt['pillar.get']('iptables:extra_rules', []) %}
 iptables.extra_rules.{{ loop.index }}:
   iptables.append:
