@@ -30,17 +30,3 @@ selenium-hub:
   file.managed:
     - source: salt://selenium-hub/selenium/hub.json.jinja
     - template: jinja
-
-{% if pillar['iptables']['apply'] %}
-nginx.iptables.http:
-  iptables.append:
-    - chain: INPUT
-    - jump: ACCEPT
-    - proto: tcp
-    - dport: 4444
-    - save: True
-    - require:
-      - iptables: iptables.default.input.established
-    - require_in:
-      - iptables: iptables.default.input.drop
-{% endif %}
