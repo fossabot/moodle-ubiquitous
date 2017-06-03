@@ -6,9 +6,9 @@ iptables.persistent:
     - pkgs:
       - iptables-persistent
 
-{% for rule in salt['pillar.get']('iptables:extra_rules', []) %}
-iptables.extra_rules.{{ loop.index }}:
-  iptables.append:
+{% for rule in salt['pillar.get']('iptables:rules', []) %}
+iptables.rules.{{ loop.index }}:
+  iptables.insert:
 {% for pair in rule %}
     - {{ pair.keys()[0] }}: {{ pair.values()[0] | yaml }}
 {% endfor %}
