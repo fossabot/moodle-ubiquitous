@@ -1,13 +1,60 @@
+{% set ssl = 'ssl' in platform['nginx'] and platform['nginx']['ssl'] %}
+
 server {
+    listen 80;
     server_name {{ domain }}{% if 'aliases' in platform %} {{ platform['aliases'] | join(' ') }}{% endif %};
 
     root {{ platform['user']['home'] }}/current;
     index index.php index.html;
 
+    add_header X-Backend-Server $hostname;
+
     access_log /var/log/nginx/{{ platform['basename'] }}/access.log;
     error_log /var/log/nginx/{{ platform['basename'] }}/error.log error;
 
+    client_max_body_size {{ platform['nginx']['client_max_body_size'] }};
+
+    include "sites-extra/{{ platform['basename'] }}.*.conf";
+
+    location ~ ^/(status|ping)$ {
+{% for client in salt['pillar.get']('php-fpm:status_clients', []) %}
+        allow {{ client }};
+{% endfor %}
+        deny all;
+
+        include fastcgi.conf;
+        fastcgi_pass unix:/var/run/php/php7.0-fpm-{{ platform['basename'] }}.sock;
+    }
+
+    location / {
+{% if ssl and salt['file.file_exists']('/etc/letsencrypt/live/' + domain + '/fullchain.pem') %}
+        return 301 https://$host$request_uri;
+{% else %}
+        location ~ ^(.+\.php)(/|$) {
+            include snippets/fastcgi-php.conf;
+            fastcgi_param SCRIPT_FILENAME $document_root$1;
+            fastcgi_pass unix:/var/run/php/php7.0-fpm-{{ platform['basename'] }}.sock;
+        }
+{% endif %}
+    }
+}
+
+{% if ssl and salt['file.file_exists']('/etc/letsencrypt/live/' + domain + '/fullchain.pem') %}
+server {
+    listen 443 ssl;
+    server_name {{ domain }}{% if 'aliases' in platform %} {{ platform['aliases'] | join(' ') }}{% endif %};
+
+    root {{ platform['user']['home'] }}/current;
+    index index.php index.html;
+
     add_header X-Backend-Server $hostname;
+
+    ssl on;
+    ssl_certificate {{ platform['nginx']['ssl_certificate'] }};
+    ssl_certificate_key {{ platform['nginx']['ssl_certificate_key'] }};
+
+    access_log /var/log/nginx/{{ platform['basename'] }}/access.log;
+    error_log /var/log/nginx/{{ platform['basename'] }}/error.log error;
 
     client_max_body_size {{ platform['nginx']['client_max_body_size'] }};
 
@@ -29,3 +76,4 @@ server {
         fastcgi_pass unix:/var/run/php/php7.0-fpm-{{ platform['basename'] }}.sock;
     }
 }
+{% endif %}
