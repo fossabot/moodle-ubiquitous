@@ -32,6 +32,21 @@ nginx:
     - require:
       - pkg: nginx
 
+/etc/nginx/sites-available/default.conf:
+  file.managed:
+    - source: salt://nginx-base/nginx/default.conf
+    - user: root
+    - group: root
+    - mode: 0644
+    - require:
+      - pkg: nginx
+
+/etc/nginx/sites-enabled/default.conf:
+  file.symlink:
+    - target: /etc/nginx/sites-available/default.conf
+    - require:
+      - file: /etc/nginx/sites-available/default.conf
+
 nginx.ssl_params:
   file.managed:
     - name: /etc/nginx/ssl_params
@@ -51,4 +66,6 @@ nginx.reload:
   service.running:
     - name: nginx
     - reload: True
+    - watch:
+      - file: /etc/nginx/sites-available/default.conf
 {% endif %}
