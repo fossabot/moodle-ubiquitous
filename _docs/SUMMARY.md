@@ -8,5 +8,6 @@
     * [Application servers](roles/app.md)
     * [GoCD](roles/gocd.md)
     * [Salt](roles/salt.md)
+    * [Selenium](roles/selenium.md)
 * [The pillar](pillar/README.md)
 * [Developing Ubiquitous](development/README.md)
