@@ -18,6 +18,21 @@ platforms:
             PHP_VALUE: |
               max_execution_time=3600
               memory_limit=1024m
+        slowmods:
+          location: ^(/phpinfo\.php|/mod/[^/]/view\.php)(/|$)
+          conditions:
+            - condition: $arg_action = 'grading'
+              variables:
+                platform_php_max_execution_time: 3600
+                platform_php_memory_limit: 1024m
+            - condition: $arg_action != 'grading'
+              variables:
+                platform_php_max_execution_time: 1
+                platform_php_memory_limit: 128m
+          fastcgi_params:
+            PHP_VALUE: |
+              max_execution_time=$platform_php_max_execution_time
+              memory_limit=$platform_php_memory_limit
         fast:
           location: ^(.+\.php)(/|$)
           fastcgi_read_timeout: 60
